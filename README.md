@@ -59,8 +59,6 @@ The following settings are required to connect to the API.
 | FutureDays                  | The number of days in the future from which the gigs will be imported                                                       | Yes       |
 | CSVMappingFile              | Specifies the file name (including the path) for the CSV mapping file that contains the CostCenter mapping                  | Yes       |
 | CSVMappingDelimiter         | The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly | Yes       |
-| ReportOnNonExistingWorklogs | The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly | No        |
-| JSONReportFile              | Specifies the file name (including the path) for the JSON file to which the non-existing worklogs will be exported          | No        |
 
 ## Remarks
 
