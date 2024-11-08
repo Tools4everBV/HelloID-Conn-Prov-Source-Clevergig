@@ -235,10 +235,6 @@ try {
         $processedWorkers.Add($workerObject)
     }
 
-    if ($config.ReportOnNonExistingWorklogs -eq $true) {
-        $allWorkLogsNotFound | ConvertTo-Json | Out-File $config.JSONReportFile -Force
-    }
-
     $processedWorkers | ConvertTo-Json -Depth 20
 } catch {
     $ex = $PSItem
