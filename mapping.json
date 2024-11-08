@@ -1,0 +1,86 @@
+{
+    "personMappings": [
+        {
+            "name": "Contact.Personal.Email",
+            "mode": "field",
+            "value": "WorkerDetails.attributes.email",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "Contact.Personal.Phone.Mobile",
+            "mode": "field",
+            "value": "WorkerDetails.attributes.phone",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "ExternalId",
+            "mode": "field",
+            "value": "ExternalId",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "Name.FamilyName",
+            "mode": "field",
+            "value": "WorkerDetails.attributes.last_name",
+            "validation": {
+                "required": true
+            }
+        },
+        {
+            "name": "Name.GivenName",
+            "mode": "field",
+            "value": "WorkerDetails.attributes.first_name",
+            "validation": {
+                "required": false
+            }
+        }
+    ],
+    "contractMappings": [
+        {
+            "name": "CostCenter.Code",
+            "mode": "complex",
+            "value": "function GetCostCenterDetails(){\r\n    if (sourceContract.ContractType === 'gig' && sourceContract.CostCenterDetails?.IntusResourceGroupId){\r\n        return sourceContract.CostCenterDetails.IntusResourceGroupId\r\n    }\r\n}\r\nGetCostCenterDetails();",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "EndDate",
+            "mode": "field",
+            "value": "EndDate",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "ExternalId",
+            "mode": "field",
+            "value": "ExternalId",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "StartDate",
+            "mode": "field",
+            "value": "StartDate",
+            "validation": {
+                "required": false
+            }
+        },
+        {
+            "name": "Type.Description",
+            "mode": "field",
+            "value": "ContractType",
+            "validation": {
+                "required": false
+            }
+        }
+    ]
+}
