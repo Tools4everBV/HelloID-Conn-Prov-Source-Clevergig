@@ -1,0 +1,83 @@
+[
+    {
+        "key": "ApiKey",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "type": "password",
+            "label": "ApiKey",
+            "description": "The ApiKey to connect to the API",
+            "required": true
+        }
+    },
+    {
+        "key": "BaseUrl",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "BaseUrl",
+            "description": "The URL to the API",
+            "required": true
+        }
+    },
+    {
+        "key": "HistoricalDays",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "HistoricalDays",
+            "description": "The number of days in the past from which the gigs will be imported",
+            "required": true
+        }
+    },
+    {
+        "key": "FutureDays",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "FutureDays",
+            "description": "The number of days in the future from which the gigs will be imported",
+            "required": true
+        }
+    },
+    {
+        "key": "CSVMappingFile",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "CSVMappingFile",
+            "description": "Specifies the file name (including the path) for the CSV mapping file that contains the CostCenter mapping",
+            "required": true
+        }
+    },
+    {
+        "key": "CSVMappingDelimiter",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "Delimiter",
+            "description": "The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly",
+            "required": true
+        }
+    },
+    {
+        "key": "ReportOnNonExistingWorklogs",
+        "type": "checkbox",
+        "defaultValue": true,
+        "templateOptions": {
+          "label": "ReportOnNonExistingWorklogs",
+          "description": "The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly",
+          "required": false
+        }
+    },
+    {
+        "key": "JSONReportFile",
+        "type": "input",
+        "defaultValue": "",
+        "templateOptions": {
+            "label": "JSONReportFile",
+            "description": "Specifies the file name (including the path) for the JSON file to which the non-existing worklogs will be exported",
+            "required": true
+        }
+    }
+]
