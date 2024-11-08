@@ -59,25 +59,5 @@
             "description": "The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly",
             "required": true
         }
-    },
-    {
-        "key": "ReportOnNonExistingWorklogs",
-        "type": "checkbox",
-        "defaultValue": true,
-        "templateOptions": {
-          "label": "ReportOnNonExistingWorklogs",
-          "description": "The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly",
-          "required": false
-        }
-    },
-    {
-        "key": "JSONReportFile",
-        "type": "input",
-        "defaultValue": "",
-        "templateOptions": {
-            "label": "JSONReportFile",
-            "description": "Specifies the file name (including the path) for the JSON file to which the non-existing worklogs will be exported",
-            "required": true
-        }
     }
 ]
