@@ -59,6 +59,7 @@ The following settings are required to connect to the API.
 | FutureDays                  | The number of days in the future from which the gigs will be imported                                                       | Yes       |
 | CSVMappingFile              | Specifies the file name (including the path) for the CSV mapping file that contains the CostCenter mapping                  | Yes       |
 | CSVMappingDelimiter         | The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly | Yes       |
+| ReportOnNonExistingWorklogs | The delimiter used within the CSV mapping file to separate columns, ensuring the file can be parsed and processed correctly | No        |
 
 ## Remarks
 
@@ -77,7 +78,7 @@ The _gig_ data set is split into two arrays: <br> - Data (contains all the gigs)
       "id": "001",
       "type": "gig",
       "attributes": {
-        "id": "001",
+        "id": 001,
         "bookmark": false,
         "created_by": "John Doe",
         "title": "First shift",
@@ -139,7 +140,7 @@ The _gig_ data set is split into two arrays: <br> - Data (contains all the gigs)
       "id": "003",
       "type": "worker",
       "attributes": {
-        "id": "003",
+        "id": 003,
         "first_name": "Emma",
         "last_name": "Brown",
         "phone": "",
@@ -166,8 +167,8 @@ The _gig_ data set is split into two arrays: <br> - Data (contains all the gigs)
       "id": "004",
       "type": "worklog",
       "attributes": {
-        "id": "004",
-        "worker_id": "003",
+        "id": 004,
+        "worker_id": 003,
         "start_at": "15:00",
         "finish_at": "23:00",
         "status": "correct",
@@ -197,7 +198,7 @@ A role represents the job position or responsibility a worker has within a gig. 
       "id": "002",
       "type": "role",
       "attributes": {
-        "id": "002",
+        "id": 002,
         "title": "Helpende"
       }
     }
@@ -217,7 +218,7 @@ A worker is the individual assigned to complete a gig. A gig can have multiple w
   "id": "003",
   "type": "worker",
   "attributes": {
-    "id": "003",
+    "id": 003,
     "first_name": "Emma",
     "last_name": "Brown",
     "phone": "",
@@ -252,6 +253,17 @@ A worklog is a record that tracks the time a worker has spent on a gig, along wi
 > - `OrganizationId`
 > - `GigId`
 > - `WorkerId`
+
+```json
+{
+    "id": "004",
+    "type": "worklog",
+    "attributes": {
+        "id": 004,
+        "worker_id": 003,
+    }
+}
+```
 
 ### CSV mapping
 
@@ -376,8 +388,8 @@ The following endpoints are used by the connector
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | /gigs          | Retrieve information about gigs. The data set is split into two arrays: <br> - Data (gigs) <br> - Includes (basic roles information, workers, and basic worklog information)             |
 | /roles         | Retrieve all available roles. <br> Since the _/gigs/includes/roles_ only contains the `role.id`, we need to look up specific information within the full _role_ object.                  |
-| /organizations | Retrieve information about organizations.                                                                                                                                                |
-| /worklogs/{organizationid} | Retrieve information about workslogs by organization.                                                                                                                        |
+| /worklogs/{id} | Retrieve information about worklogs. <br> Since the _/gigs/includes/worklogs_ only contains basic worklog information, we need the full _worklog_ object to extract organizational data. |
+
 
 ### API documentation
 
