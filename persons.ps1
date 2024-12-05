@@ -1,7 +1,5 @@
 ##################################################
 # HelloID-Conn-Prov-Source-Clevergig-Persons
-#
-# Version: 1.0.0
 ##################################################
 # Initialize default value's
 $config = $configuration | ConvertFrom-Json
@@ -164,68 +162,85 @@ try {
             Contracts = [System.Collections.Generic.List[object]]::new()
         }
 
+        $lastGigDate = $null
+
         # Get all workerGigs. (Each gig will result in a separate contract)
         $workerGigs = $allGigs | Where-Object { $_.relationships.workers.data.id -contains $worker.WorkerId }
-        foreach ($workerGig in $workerGigs){
+        if ($null -ne $workerGigs) {
 
-            # Create the gig contract
-            $gigContract = @{
-                ExternalId = "$($worker.details.attributes.external_id)$($workerGig.id)"
-                ContractType = $workerGig.type
-                Attributes = $workerGig.attributes
-                StartDate = $null
-                EndDate = $null
-                Title = $null
-                CostCenterDetails = $null
+            # The last (highest) date on the workerGigs will be the end date of the role contract
+            if ($workerGigs -is [array]) {
+                $lastGigDate = ($workerGigs | Sort-Object { $_.attributes.date } | Select-Object -Last 1).attributes.date
+            } else {
+                $lastGigDate = $workerGigs.attributes.date
             }
 
-            # Retrieve worklogs and associate CostCenter details
-            $gigDTOWorklogs = [System.Collections.Generic.List[object]]::new()
-            foreach ($worklogDTO in $allWorklogsDTO) {
-                if ($worklogDTO.logId -eq $workerGig.relationships.worklogs.data[0].id -and $worklogDTO.WorkerId -eq $worker.WorkerId) {
-                    $gigDTOWorklogs.add($worklogDTO)
+            foreach ($workerGig in $workerGigs){
+
+                # Create the gig contract
+                $gigContract = @{
+                    ExternalId = "$($worker.details.attributes.external_id)$($workerGig.id)"
+                    ContractType = $workerGig.type
+                    Attributes = $workerGig.attributes
+                    StartDate = $null
+                    EndDate = $null
+                    Title = $null
+                    CostCenterDetails = $null
                 }
-            }
 
-            # Get the organizationId
-            if ($gigDTOWorklogs.count -gt 0) {
-                $organizationId = ($gigDTOWorklogs | Select-Object -First 1).OrganizationId
-
-                # Look for the CostCenterDetails within the CSV mapping
-                if ($null -ne $organizationId){
-                    $costCenter = $costCenterCodes | Where-Object { $_.Id -eq $organizationId }
-                    $costCenterDetails = @{
-                        Id = $costCenter.Id
-                        Title = $costCenter.Titel
-                        LocatiesAdressen = $costCenter.'Locaties adressen'
-                        IntusResourceGroupId = $costCenter.'Intus-resourceGroupId'
-                        FactureringKostenplaats = $costCenter.'Facturering Kostenplaats'
+                # Retrieve worklogs and associate CostCenter details
+                $gigDTOWorklogs = [System.Collections.Generic.List[object]]::new()
+                foreach ($worklogDTO in $allWorklogsDTO) {
+                    if ($worklogDTO.logId -eq $workerGig.relationships.worklogs.data[0].id -and $worklogDTO.WorkerId -eq $worker.WorkerId) {
+                        $gigDTOWorklogs.add($worklogDTO)
                     }
-                    $gigContract.CostCenterDetails = $costCenterDetails
                 }
+
+                # Get the organizationId
+                if ($gigDTOWorklogs.count -gt 0) {
+                    $organizationId = ($gigDTOWorklogs | Select-Object -First 1).OrganizationId
+
+                    # Look for the CostCenterDetails within the CSV mapping
+                    if ($null -ne $organizationId){
+                        $costCenter = $costCenterCodes | Where-Object { $_.Id -eq $organizationId }
+                        $costCenterDetails = @{
+                            Id = $costCenter.Id
+                            Title = $costCenter.Titel
+                            LocatiesAdressen = $costCenter.'Locaties adressen'
+                            IntusResourceGroupId = $costCenter.'Intus-resourceGroupId'
+                            FactureringKostenplaats = $costCenter.'Facturering Kostenplaats'
+                        }
+                        $gigContract.CostCenterDetails = $costCenterDetails
+                    }
+                }
+
+                # Get title information by looking up the roleId within the allRoles list
+                if ($null -ne $gig.relationships.roles.data) {
+                    $gigContract.Title = ($allRoles.data | Where-Object { $_.id -eq $gig.relationships.roles.data[0].id }).attributes.title
+                }
+
+                # Construct the startDate and endDate
+                $gigContract.StartDate = [datetime]::ParseExact($workerGig.attributes.date, "dd-MM-yyyy", $null).Date
+                $gigContract.EndDate = $gigContract.StartDate.AddDays(1).AddSeconds(-1)
+
+                $workerObject.Contracts.Add($gigContract)
             }
-
-            # Get title information by looking up the roleId within the allRoles list
-            if ($null -ne $gig.relationships.roles.data) {
-                $gigContract.Title = ($allRoles.data | Where-Object { $_.id -eq $gig.relationships.roles.data[0].id }).attributes.title
-            }
-
-            # Construct the startDate and endDate
-            $gigContract.StartDate = [datetime]::ParseExact($workerGig.attributes.date, "dd-MM-yyyy", $null).Date
-            $gigContract.EndDate = $gigContract.StartDate.AddDays(1).AddSeconds(-1)
-
-            $workerObject.Contracts.Add($gigContract)
         }
 
         # Create separate contracts for each role
         if ($null -ne $worker.Details.relationships){
             $workerRoles = $worker.Details.relationships.roles.data
             foreach ($workerRole in $workerRoles){
+                if (-not $lastGigDate){
+                    $lastGigDate = [datetime]::Parse($worker.Details.attributes.created_at)
+                }
+
                 $title = $allRoles.data | Where-Object { $_.id -eq $workerRole.id }
                 $roleContract = @{
                     ExternalId = "$($worker.details.attributes.external_id)$($workerRole.id)"
                     ContractType = $workerRole.type
                     StartDate = $worker.Details.attributes.created_at
+                    EndDate = [datetime]::ParseExact($lastGigDate, "dd-MM-yyyy", $null).AddDays(1).AddSeconds(-1)
                     Title = $title.attributes.title
                 }
                 $workerObject.Contracts.Add($roleContract)
@@ -242,10 +257,8 @@ try {
         $($ex.Exception.GetType().FullName -eq 'System.Net.WebException')) {
         $streamReaderResponse = [System.IO.StreamReader]::new($ex.Exception.Response.GetResponseStream()).ReadToEnd()
         $errorDetails = $streamReaderResponse | ConvertFrom-Json
-        Write-Verbose "Could not import Clevergig persons. Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($errorDetails.errors.message)"
-        Write-Error "Could not import Clevergig persons. Error: $($errorObj.FriendlyMessage)"
+        Write-Error "Could not import Clevergig persons. Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($errorDetails.errors.message)"
     } else {
-        Write-Verbose "Could not import Clevergig persons. Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
-        Write-Error "Could not import Clevergig persons. Error: $($errorObj.FriendlyMessage)"
+        Write-Error "Could not import Clevergig persons. Error at Line '$($ex.InvocationInfo.ScriptLineNumber)': $($ex.InvocationInfo.Line). Error: $($ex.Exception.Message)"
     }
 }
