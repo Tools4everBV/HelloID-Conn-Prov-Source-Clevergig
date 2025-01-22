@@ -160,7 +160,19 @@ try {
             DisplayName = $worker.DisplayName
             WorkerDetails = $worker.Details
             Contracts = [System.Collections.Generic.List[object]]::new()
+            CustomAttributes = $null
         }
+
+        ##Only available through API is this feature is enabled by Clevergig
+        <#$customWorkerAttributes = [PSCustomObject]::new()
+        $workerCustomAttributes = Invoke-CleverGigRestMethod -Uri "workers/$($worker.ExternalId)/custom_attributes"
+        if(($workerCustomAttributes.data | Measure-Object).count -ge 1){                                       
+                $workerCustomAttributes = $workerCustomAttributes.data | Where-Object { $_.type -eq 'custom_attribute' }
+                foreach($attribute in $workerCustomAttributes.attributes){                            
+                    $customWorkerAttributes | Add-Member -MemberType NoteProperty -Name "$($attribute.title)" -Value $($attribute.value) -Force
+                }
+        }                
+        $workerObject.CustomAttributes = $customWorkerAttributes#>
 
         $lastGigDate = $null
 
@@ -182,11 +194,22 @@ try {
                     ExternalId = "$($worker.details.attributes.external_id)$($workerGig.id)"
                     ContractType = $workerGig.type
                     Attributes = $workerGig.attributes
+                    CustomAttributes = $null                    
                     StartDate = $null
                     EndDate = $null
                     Title = $null
                     CostCenterDetails = $null
                 }
+
+                $customGigAttributes = [PSCustomObject]::new()
+                $gigCustomAttributes = Invoke-CleverGigRestMethod -Uri "gigs/$($workerGig.id)/custom_attributes"
+                if(($gigCustomAttributes.data | Measure-Object).count -ge 1){                                       
+                        $gigCustomAttributes = $gigCustomAttributes.data | Where-Object { $_.type -eq 'custom_attribute' }
+                        foreach($attribute in $gigCustomAttributes.attributes){                            
+                            $customGigAttributes | Add-Member -MemberType NoteProperty -Name "$($attribute.title)" -Value $($attribute.value) -Force
+                        }
+                }                
+                $gigContract.CustomAttributes = $customGigAttributes
 
                 # Retrieve worklogs and associate CostCenter details
                 $gigDTOWorklogs = [System.Collections.Generic.List[object]]::new()
@@ -215,13 +238,13 @@ try {
                 }
 
                 # Get title information by looking up the roleId within the allRoles list
-                if ($null -ne $gig.relationships.roles.data) {
-                    $gigContract.Title = ($allRoles.data | Where-Object { $_.id -eq $gig.relationships.roles.data[0].id }).attributes.title
+                if ($null -ne $workerGig.relationships.roles.data) {
+                    $gigContract.Title = ($allRoles.data | Where-Object { $_.id -eq $workerGig.relationships.roles.data[0].id }).attributes.title
                 }
 
-                # Construct the startDate and endDate
-                $gigContract.StartDate = [datetime]::ParseExact($workerGig.attributes.date, "dd-MM-yyyy", $null).Date
-                $gigContract.EndDate = $gigContract.StartDate.AddDays(1).AddSeconds(-1)
+                # Construct the startDate and endDate                
+                $gigContract.StartDate = [datetime]::ParseExact($workerGig.attributes.date, "dd-MM-yyyy", $null).Date.ToLocalTime()
+                $gigContract.EndDate = $gigContract.StartDate.AddDays(1)#.AddSeconds(-1)
 
                 $workerObject.Contracts.Add($gigContract)
             }
@@ -247,7 +270,9 @@ try {
             }
         }
 
-        $processedWorkers.Add($workerObject)
+        if($null -ne $workerObject.ExternalId){
+            $processedWorkers.Add($workerObject)
+        }
     }
 
     $processedWorkers | ConvertTo-Json -Depth 20
